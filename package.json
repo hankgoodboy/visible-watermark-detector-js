@@ -1,0 +1,29 @@
+{
+  "name": "visible-watermark-detector-js",
+  "version": "0.1.0",
+  "description": "A small JavaScript research library for detecting visible AI image watermark regions.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "watermark",
+    "image",
+    "provenance",
+    "ai-images",
+    "computer-vision",
+    "benchmark"
+  ],
+  "license": "MIT",
+  "files": [
+    "src",
+    "docs",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ]
+}
