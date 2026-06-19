@@ -1,29 +1,28 @@
-import { detectVisibleWatermark } from "../src/index.js";
+import { detectPlatformWatermark, removeWatermark } from "../src/index.js";
+import { DOUBAO_CONFIG } from "../src/platforms/doubao.js";
+import { rasterizeTemplate } from "../src/template-mask.js";
 
-const width = 320;
-const height = 220;
+const width = 512;
+const height = 512;
 const data = new Uint8ClampedArray(width * height * 4);
 
-for (let y = 0; y < height; y++) {
-  for (let x = 0; x < width; x++) {
-    const idx = (y * width + x) * 4;
-    const base = 120 + Math.round((x / width) * 35);
-    data[idx] = base;
-    data[idx + 1] = base + 8;
-    data[idx + 2] = base + 16;
-    data[idx + 3] = 255;
-  }
+for (let index = 0; index < data.length; index += 4) {
+  data[index] = 72;
+  data[index + 1] = 84;
+  data[index + 2] = 98;
+  data[index + 3] = 255;
 }
 
-for (let y = height - 54; y < height - 18; y++) {
-  for (let x = width - 58; x < width - 18; x++) {
-    const idx = (y * width + x) * 4;
-    const stripe = (x + y) % 11 < 5;
-    data[idx] = stripe ? 238 : 36;
-    data[idx + 1] = stripe ? 238 : 42;
-    data[idx + 2] = stripe ? 238 : 48;
-  }
+const placement = DOUBAO_CONFIG.getPlacement(width, height);
+const mask = rasterizeTemplate(DOUBAO_CONFIG.template, width, height, placement);
+for (let position = 0; position < mask.length; position += 1) {
+  if (!mask[position]) continue;
+  const index = position * 4;
+  data[index] = 235;
+  data[index + 1] = 235;
+  data[index + 2] = 235;
 }
 
-const result = detectVisibleWatermark({ width, height, data });
-console.log(JSON.stringify(result, null, 2));
+const imageData = { width, height, data };
+console.log("Detection:", detectPlatformWatermark(imageData));
+console.log("Removal:", removeWatermark(imageData).meta);

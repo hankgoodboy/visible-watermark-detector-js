@@ -3,17 +3,48 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Visible Watermark Detector Demo</title>
+    <title>AI Watermark Tools JS Demo</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
     <main>
-      <section class="panel">
-        <h1>Visible Watermark Detector</h1>
-        <input id="file" type="file" accept="image/*">
-        <canvas id="canvas" width="720" height="420"></canvas>
-        <pre id="output">Choose an image to inspect corner watermark candidates.</pre>
+      <header>
+        <p class="eyebrow">Local ImageData demo</p>
+        <h1>AI Watermark Tools JS</h1>
+        <p>Choose an authorized image, select its source, and process it locally.</p>
+      </header>
+
+      <section class="controls" aria-label="Image controls">
+        <label>
+          Platform
+          <select id="platform">
+            <option value="auto">Auto detect</option>
+            <option value="gemini">Gemini</option>
+            <option value="doubao">Doubao</option>
+            <option value="jimeng">Jimeng</option>
+          </select>
+        </label>
+        <label class="file-button">
+          Choose image
+          <input id="file" type="file" accept="image/png,image/jpeg,image/webp">
+        </label>
+        <button id="download" type="button" disabled>Download PNG</button>
       </section>
+
+      <p id="status" class="status" role="status">No image selected.</p>
+
+      <section class="preview-grid" aria-label="Before and after preview">
+        <figure>
+          <canvas id="before" width="960" height="540"></canvas>
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          <canvas id="after" width="960" height="540"></canvas>
+          <figcaption>Result</figcaption>
+        </figure>
+      </section>
+
+      <pre id="output">Result metadata will appear here.</pre>
     </main>
     <script type="module" src="./main.js"></script>
   </body>

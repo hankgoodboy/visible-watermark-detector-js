@@ -1,114 +1,187 @@
-# Visible Watermark Detector JS
+# AI Watermark Tools JS
 
-A small JavaScript research library for detecting visible AI image watermark regions.
+Zero-dependency JavaScript tools for detecting and locally restoring supported
+visible AI image watermarks from Gemini, Doubao, and Jimeng images.
 
-This project focuses on visible watermark analysis, image provenance research, and evaluation workflows. It does not remove, bypass, or alter watermarks.
+The library accepts `ImageData`-compatible RGBA pixels and runs entirely in the
+browser or a JavaScript runtime. It does not upload images to a server.
 
-## What It Does
+> Use this project only with images you own or are authorized to edit. Keep an
+> original copy and preserve provenance information when disclosure matters.
 
-`visible-watermark-detector-js` accepts `ImageData`-compatible pixel data and returns a heuristic prediction for visible corner watermark regions.
+## Supported platforms
 
-It is designed for:
+| Platform | Visible mark | Method | Status |
+| --- | --- | --- | --- |
+| Gemini | supported corner star/logo layouts | alpha-template inversion | Supported |
+| Doubao | bottom-right `豆包AI生成` layout | template-guided local inpaint | Supported layout |
+| Jimeng | bottom-right `即梦AI` logo/text layout | template-guided local inpaint | Supported layout |
 
-- AI image provenance experiments
-- visible watermark dataset annotation
-- benchmark tooling
-- before/after quality evaluation pipelines
-- browser and Node.js demos
+These adapters handle specific visible layouts, not arbitrary watermarks. See
+[platform support](./docs/platform-support.md) before integrating.
 
-## Why Visible AI Watermark Detection Matters
+## Features
 
-Visible marks are still common in generated images, previews, marketplaces, and creative tools. Being able to locate and measure these regions helps researchers compare platform behavior, document image provenance signals, and evaluate how visible marks affect downstream image quality metrics.
-
-## Supported Signals
-
-The current MVP detects compact visible marks near image corners. It looks for local structure, contrast, edge density, and saturation differences inside candidate corner windows.
-
-Supported output:
-
-```js
-{
-  detected: true,
-  confidence: 0.87,
-  bbox: { x: 1320, y: 690, width: 72, height: 72 },
-  type: "corner-visible-mark"
-}
-```
+- one `ImageData` API for browser and Node.js workflows
+- explicit `gemini`, `doubao`, and `jimeng` adapters
+- `auto` mode for supported platform selection
+- no network requests or runtime dependencies
+- backward-compatible generic corner detector
+- TypeScript declarations
+- synthetic tests and a browser demo
 
 ## Install
 
 ```bash
-npm install visible-watermark-detector-js
+npm install ai-watermark-tools-js
 ```
 
 For local development:
 
 ```bash
-npm test
+node --test
+node examples/node-demo.js
 ```
 
-## Browser Usage
+## Quick start
 
 ```js
-import { detectVisibleWatermark } from "visible-watermark-detector-js";
+import { removeWatermark } from "ai-watermark-tools-js";
 
-const canvas = document.querySelector("canvas");
-const ctx = canvas.getContext("2d");
-const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const result = removeWatermark(imageData, { platform: "auto" });
 
-const result = detectVisibleWatermark(imageData);
-console.log(result);
+console.log(result.meta);
+// {
+//   applied: true,
+//   detected: true,
+//   platform: "doubao",
+//   confidence: 0.98,
+//   method: "template-guided-local-inpaint",
+//   bbox: { x, y, width, height, pixels }
+// }
+
+context.putImageData(
+  new ImageData(result.imageData.data, result.imageData.width, result.imageData.height),
+  0,
+  0,
+);
 ```
 
-See [examples/browser-demo](./examples/browser-demo/) for a complete browser demo.
-
-## Node Usage
+### Choose a platform explicitly
 
 ```js
-import { detectVisibleWatermark } from "visible-watermark-detector-js";
-
-const imageData = {
-  width: 1400,
-  height: 800,
-  data: new Uint8ClampedArray(1400 * 800 * 4)
-};
-
-const result = detectVisibleWatermark(imageData);
-console.log(result);
+const result = removeWatermark(imageData, { platform: "gemini" });
 ```
 
-See [examples/node-demo.js](./examples/node-demo.js) for a dependency-free synthetic example.
+Explicit mode is recommended when your application already knows the image
+source. It avoids unnecessary platform checks and gives more predictable
+results.
 
-## Detection Output
+### Detect without applying template-guided restoration
 
-The detector returns:
+```js
+import { detectPlatformWatermark } from "ai-watermark-tools-js";
 
-- `detected`: whether a visible corner mark was found
-- `confidence`: normalized confidence from `0` to `1`
-- `bbox`: predicted mark region in image coordinates, or `null`
-- `type`: currently `"corner-visible-mark"` or `"none"`
-- `candidates`: ranked corner candidates for debugging and benchmark use
+const detection = detectPlatformWatermark(imageData, { platform: "doubao" });
+console.log(detection.detected, detection.confidence, detection.bbox);
+```
 
-## Evaluation Metrics
+The Gemini detector internally evaluates the supported alpha template and can
+be more computationally expensive than the Doubao and Jimeng detectors.
 
-For benchmark and evaluation ideas, see [docs/metrics.md](./docs/metrics.md).
+## Platform-specific API
+
+```js
+import {
+  removeGeminiWatermark,
+  removeDoubaoWatermark,
+  removeJimengWatermark,
+} from "ai-watermark-tools-js";
+```
+
+The template-guided adapters do not modify pixels when their expected visible
+layout is not detected. Advanced callers can pass `{ force: true }` to Doubao
+or Jimeng removal when the source is already known.
+
+## Existing detector API
+
+The original research-oriented API remains available:
+
+```js
+import { detectVisibleWatermark } from "ai-watermark-tools-js";
+
+const result = detectVisibleWatermark(imageData);
+```
+
+It returns a heuristic corner-region prediction and is useful for dataset
+annotation and evaluation. It does not identify a platform with certainty.
+
+## Browser demo
+
+Serve the repository over HTTP:
+
+```bash
+python3 -m http.server 8000
+```
+
+Open:
+
+```text
+http://localhost:8000/examples/browser-demo/
+```
+
+The demo lets you upload an image, choose a platform, compare the result, and
+download the restored PNG locally.
+
+## API contract
+
+All removal functions return:
+
+```js
+{
+  imageData: { width, height, data: Uint8ClampedArray },
+  meta: {
+    applied,
+    detected,
+    platform,
+    confidence,
+    method,
+    bbox,
+    diagnostics
+  }
+}
+```
+
+Input pixels are never mutated.
 
 ## Limitations
 
-This is a lightweight heuristic detector. It is not a universal watermark classifier and should not be treated as proof that an image came from a specific model or platform.
+- not a universal watermark remover
+- template adapters depend on known position, scale, and visible layout
+- complex edges and detailed textures may require manual editing afterward
+- does not remove SynthID, C2PA, EXIF, XMP, IPTC, or other hidden provenance
+- does not prove which model or service generated an image
+- animation and video are not supported
 
-Known limitations:
+## Research and evaluation
 
-- best suited to compact visible marks near corners
-- may miss very low-contrast marks
-- may confuse logos, signatures, captions, or UI overlays with watermarks
-- does not inspect metadata, SynthID, C2PA, EXIF, IPTC, or XMP signals
+The generic detector and evaluation notes remain useful for visible watermark
+research. See [metrics](./docs/metrics.md) for IoU, residual, and reconstruction
+quality ideas.
 
-## Related Tools
+## Related web tools
 
-Try a browser-based Gemini watermark cleanup demo:
+Try the same local-first workflow in the browser:
 
-https://easyremovewatermark.com/
+- [Easy Remove Watermark](https://easyremovewatermark.com/)
+- [Doubao watermark remover](https://easyremovewatermark.com/doubao-watermark-remover/)
+- [Jimeng watermark remover](https://easyremovewatermark.com/jimeng-watermark-remover/)
+
+## Third-party code
+
+The Gemini adapter contains MIT-licensed work derived from
+`GargantuaX/gemini-watermark-remover`. See [NOTICE.md](./NOTICE.md) and the
+preserved [third-party license](./third_party/gemini-watermark-remover/LICENSE).
 
 ## License
 

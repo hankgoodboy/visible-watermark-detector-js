@@ -1,29 +1,37 @@
 {
-  "name": "visible-watermark-detector-js",
-  "version": "0.1.0",
-  "description": "A small JavaScript research library for detecting visible AI image watermark regions.",
+  "name": "ai-watermark-tools-js",
+  "version": "0.2.0",
+  "description": "Zero-dependency JavaScript tools for detecting and locally restoring supported visible AI image watermarks.",
   "type": "module",
   "main": "./src/index.js",
+  "types": "./src/index.d.ts",
   "exports": {
-    ".": "./src/index.js"
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    }
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "demo": "node examples/node-demo.js"
   },
   "keywords": [
     "watermark",
-    "image",
-    "provenance",
-    "ai-images",
-    "computer-vision",
-    "benchmark"
+    "gemini",
+    "doubao",
+    "jimeng",
+    "image-data",
+    "browser",
+    "provenance"
   ],
   "license": "MIT",
   "files": [
     "src",
     "docs",
     "examples",
+    "third_party",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE.md"
   ]
 }
